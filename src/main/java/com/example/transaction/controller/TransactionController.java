@@ -18,13 +18,16 @@ public class TransactionController {
 
     @PostMapping("/generate")
     public Transaction generateSingle() {
-        return service.generateTransaction();
+        return service.generateRandomTransaction();
     }
 
     @PostMapping("/generate/bulk")
-    public List<Transaction> generateBulk(
-            @RequestParam int count) {
-
+    public List<Transaction> generateBulk(@RequestParam int count) {
         return service.generateBulkTransactions(count);
+    }
+
+    @PostMapping("/manual")
+    public Transaction manual(@RequestBody Transaction txn) {
+        return service.saveManualTransaction(txn);
     }
 }

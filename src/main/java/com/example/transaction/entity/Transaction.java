@@ -14,11 +14,25 @@ public class Transaction {
     private Long id;
 
     private String transactionId;
-    private String accountNumber;
-    private String transactionType; // CREDIT / DEBIT
+
+    // Sender Details
+    private String senderName;
+    private String senderAccount;
+
+    // Receiver Details
+    private String receiverName;
+    private String receiverAccount;
+
+    private String transactionType;   // CREDIT / DEBIT
     private Double amount;
+    private String channel;           // ATM / ONLINE / UPI / POS
     private String location;
     private String deviceId;
+    private String ipAddress;
+    private Integer failedAttempts;
+
+    private String status;            // NORMAL / SUSPICIOUS / FRAUD
+    private Integer riskScore;
+
     private LocalDateTime createdAt;
-    private String status; // NORMAL / SUSPICIOUS
 }

@@ -16,5 +16,6 @@ public class Alert {
     private String transactionId;
     private String ruleTriggered;
     private String riskLevel;
+    private Integer riskScore;  // NEW
     private LocalDateTime createdAt;
 }
