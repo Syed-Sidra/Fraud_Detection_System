@@ -1,89 +1,85 @@
 package com.example.transaction.service;
 
-import com.example.transaction.entity.Alert;
 import com.example.transaction.entity.Transaction;
-import com.example.transaction.repository.AlertRepository;
 import com.example.transaction.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 
 @Service
-public class FraudDetectionService {
+public class TransactionGeneratorService {
 
-    private final TransactionRepository transactionRepository;
-    private final AlertRepository alertRepository;
+    private final TransactionRepository repository;
+    private final FraudDetectionService fraudService;
+    private final Random random = new Random();
 
-    public FraudDetectionService(TransactionRepository transactionRepository,
-                                 AlertRepository alertRepository) {
-        this.transactionRepository = transactionRepository;
-        this.alertRepository = alertRepository;
+    public TransactionGeneratorService(TransactionRepository repository,
+                                       FraudDetectionService fraudService) {
+        this.repository = repository;
+        this.fraudService = fraudService;
     }
 
-    public void evaluateTransaction(Transaction txn) {
+    // Generate Random Transaction
+    public Transaction generateRandomTransaction() {
 
-        int score = 0;
-        String rule = "None";
-
-        // 1️⃣ High Amount
-        if (txn.getAmount() > 100000) {
-            score += 60;
-            rule = "High Amount";
-        }
-
-        // 2️⃣ Odd Hour
-        int hour = txn.getCreatedAt().getHour();
-        if (hour >= 0 && hour <= 5) {
-            score += 30;
-            rule = "Odd Hour";
-        }
-
-        // 3️⃣ Failed Attempts
-        if (txn.getFailedAttempts() != null && txn.getFailedAttempts() > 3) {
-            score += 40;
-            rule = "Multiple Failed Attempts";
-        }
-
-        // 4️⃣ High Velocity
-        LocalDateTime oneMinuteAgo = txn.getCreatedAt().minusMinutes(1);
-
-        List<Transaction> recent =
-                transactionRepository.findBySenderAccountAndCreatedAtAfter(
-                        txn.getSenderAccount(),
-                        oneMinuteAgo
-                );
-
-        if (recent.size() >= 3) {
-            score += 50;
-            rule = "High Velocity";
-        }
-
-        txn.setRiskScore(score);
-
-        if (score >= 80) {
-            txn.setStatus("FRAUD");
-            createAlert(txn, rule, "HIGH");
-        }
-        else if (score >= 40) {
-            txn.setStatus("SUSPICIOUS");
-            createAlert(txn, rule, "MEDIUM");
-        }
-        else {
-            txn.setStatus("NORMAL");
-        }
+        Transaction txn = buildRandomTransaction();
+        fraudService.evaluateTransaction(txn);
+        return repository.save(txn);
     }
 
-    private void createAlert(Transaction txn,
-                             String rule,
-                             String riskLevel) {
+    // Generate 10,000+ transactions efficiently
+    public List<Transaction> generateBulkTransactions(int count) {
 
-        Alert alert = new Alert();
-        alert.setTransactionId(txn.getTransactionId());
-        alert.setRuleTriggered(rule);
-        alert.setRiskLevel(riskLevel);
-        alert.setCreatedAt(LocalDateTime.now());
+        List<Transaction> transactions = new ArrayList<>();
 
-        alertRepository.save(alert);
+        for (int i = 0; i < count; i++) {
+            Transaction txn = buildRandomTransaction();
+            fraudService.evaluateTransaction(txn);
+            transactions.add(txn);
+        }
+
+        return repository.saveAll(transactions);
+    }
+
+    private Transaction buildRandomTransaction() {
+
+        Transaction txn = new Transaction();
+
+        txn.setTransactionId(UUID.randomUUID().toString());
+
+        txn.setSenderName("User-" + random.nextInt(1000));
+        txn.setSenderAccount("ACC" + random.nextInt(100000));
+
+        txn.setReceiverName("Receiver-" + random.nextInt(1000));
+        txn.setReceiverAccount("ACC" + random.nextInt(100000));
+
+        txn.setTransactionType(random.nextBoolean() ? "CREDIT" : "DEBIT");
+        txn.setAmount(500 + random.nextDouble() * 200000);
+
+
+        txn.setDeviceId("Device-" + random.nextInt(50));
+        txn.setIpAddress("192.168.0." + random.nextInt(255));
+
+        txn.setFailedAttempts(random.nextInt(5));
+        txn.setCreatedAt(LocalDateTime.now());
+
+        return txn;
+    }
+
+    private String getRandomChannel() {
+        String[] channels = {"ATM", "ONLINE", "UPI", "POS"};
+        return channels[random.nextInt(channels.length)];
+    }
+
+    // Manual Save
+    public Transaction saveManualTransaction(Transaction txn) {
+
+        txn.setTransactionId(UUID.randomUUID().toString());
+        txn.setCreatedAt(LocalDateTime.now());
+
+        fraudService.evaluateTransaction(txn);
+
+        return repository.save(txn);
     }
 }
