@@ -1,0 +1,128 @@
+/**
+ * RESPONSIVE BREAKPOINTS
+ * Mobile-first approach
+ */
+
+// Breakpoints
+$breakpoint-xs: 320px;   // Extra small devices (phones)
+$breakpoint-sm: 576px;   // Small devices (landscape phones)
+$breakpoint-md: 768px;   // Medium devices (tablets)
+$breakpoint-lg: 992px;   // Large devices (desktops)
+$breakpoint-xl: 1200px;  // Extra large devices (large desktops)
+$breakpoint-xxl: 1400px; // XXL devices (ultra-wide)
+
+// Mixins for responsive design
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == 'sm' {
+    @media (min-width: $breakpoint-sm) {
+      @content;
+    }
+  }
+  @else if $breakpoint == 'md' {
+    @media (min-width: $breakpoint-md) {
+      @content;
+    }
+  }
+  @else if $breakpoint == 'lg' {
+    @media (min-width: $breakpoint-lg) {
+      @content;
+    }
+  }
+  @else if $breakpoint == 'xl' {
+    @media (min-width: $breakpoint-xl) {
+      @content;
+    }
+  }
+  @else if $breakpoint == 'xxl' {
+    @media (min-width: $breakpoint-xxl) {
+      @content;
+    }
+  }
+  @else if $breakpoint == 'max-md' {
+    @media (max-width: $breakpoint-md - 1px) {
+      @content;
+    }
+  }
+  @else if $breakpoint == 'max-lg' {
+    @media (max-width: $breakpoint-lg - 1px) {
+      @content;
+    }
+  }
+}
+
+// Flexbox utilities
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+// Grid utilities
+@mixin grid-auto {
+  display: grid;
+  grid-auto-flow: row;
+}
+
+// Text utilities
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin text-clamp($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// Transitions
+@mixin transition($properties: all, $duration: 0.3s, $easing: ease-in-out) {
+  transition: $properties $duration $easing;
+}
+
+// Shadows
+@mixin shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+@mixin shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+// Container
+@mixin container {
+  width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  margin-left: auto;
+  margin-right: auto;
+
+  @include respond-to('sm') {
+    max-width: 540px;
+  }
+  @include respond-to('md') {
+    max-width: 720px;
+  }
+  @include respond-to('lg') {
+    max-width: 960px;
+  }
+  @include respond-to('xl') {
+    max-width: 1140px;
+  }
+  @include respond-to('xxl') {
+    max-width: 1320px;
+  }
+}

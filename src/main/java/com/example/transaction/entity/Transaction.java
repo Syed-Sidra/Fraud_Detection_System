@@ -3,36 +3,36 @@ package com.example.transaction.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Table(name = "transactions")
 @Data
-public class Transaction extends com.example.transaction.model.Transaction {
+public class Transaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String transactionId;
 
-    // Sender Details
     private String senderName;
     private String senderAccount;
 
-    // Receiver Details
     private String receiverName;
     private String receiverAccount;
 
-    private String transactionType;   // CREDIT / DEBIT
-    private Double amount;
-    private String channel;           // ATM / ONLINE / UPI / POS
+    private String transactionType;
+    private double amount;
+
+    private String channel;
     private String location;
+
+    private int riskScore;
+    private String status;
+
     private String deviceId;
     private String ipAddress;
-    private Integer failedAttempts;
-
-    private String status;            // NORMAL / SUSPICIOUS / FRAUD
-    private Integer riskScore;
+    private int failedAttempts;
 
     private LocalDateTime createdAt;
 }

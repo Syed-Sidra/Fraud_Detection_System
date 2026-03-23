@@ -62,7 +62,7 @@ public class TransactionGeneratorService {
         txn.setIpAddress("192.168.0." + random.nextInt(255));
 
         txn.setFailedAttempts(random.nextInt(5));
-        txn.setCreatedAt(LocalDateTime.now());
+//        txn.setCreatedAt(LocalDateTime.now());
 
         return txn;
     }
@@ -76,7 +76,7 @@ public class TransactionGeneratorService {
     public Transaction saveManualTransaction(Transaction txn) {
 
         txn.setTransactionId(UUID.randomUUID().toString());
-        txn.setCreatedAt(LocalDateTime.now());
+//        txn.setCreatedAt(LocalDateTime.now());
 
         fraudService.evaluateTransaction(txn);
 

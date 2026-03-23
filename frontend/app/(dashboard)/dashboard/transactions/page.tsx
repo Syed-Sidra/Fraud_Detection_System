@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { generateBulkTransactions, checkFraud } from "@/lib/api"
 import {
   Dialog,
   DialogContent,
@@ -40,16 +41,47 @@ export default function TransactionsPage() {
     refreshData()
   }, [])
 
-  const refreshData = () => {
-    setIsRefreshing(true)
-    const newTransactions = generateTransactions(30, 20)
-    const withDetection: TransactionWithDetection[] = newTransactions.map(tx => ({
-      transaction: tx,
-      detection: generateDetectionResult(tx)
-    }))
+//   const refreshData = () => {
+//     setIsRefreshing(true)
+//     const newTransactions = generateTransactions(30, 20)
+//     const withDetection: TransactionWithDetection[] = newTransactions.map(tx => ({
+//       transaction: tx,
+//       detection: generateDetectionResult(tx)
+//     }))
+//     setTransactions(withDetection)
+//     setTimeout(() => setIsRefreshing(false), 500)
+//   }
+
+
+const refreshData = async () => {
+
+  setIsRefreshing(true)
+
+  try {
+
+    const data = await generateBulkTransactions(30)
+
+    const withDetection = []
+
+    for (const tx of data) {
+
+      const detection = await checkFraud(tx)
+
+      withDetection.push({
+        transaction: detection
+      })
+
+    }
+
     setTransactions(withDetection)
-    setTimeout(() => setIsRefreshing(false), 500)
+
+  } catch (error) {
+    console.error("Error loading transactions", error)
   }
+
+  setIsRefreshing(false)
+
+}
 
   const filteredTransactions = transactions.filter((item) => {
     const tx = item.transaction

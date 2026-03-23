@@ -1,0 +1,147 @@
+/**
+ * RESPONSIVE LAYOUT UTILITIES
+ */
+
+@use './breakpoints' as *;
+
+// Container width classes
+.container {
+  @include container;
+}
+
+// Responsive grid system
+.grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+
+  @include respond-to('md') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond-to('lg') {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @include respond-to('xl') {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  &.grid-2 {
+    grid-template-columns: 1fr;
+    @include respond-to('md') { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  &.grid-3 {
+    grid-template-columns: 1fr;
+    @include respond-to('lg') { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  &.grid-4 {
+    grid-template-columns: 1fr;
+    @include respond-to('sm') { grid-template-columns: repeat(2, 1fr); }
+    @include respond-to('lg') { grid-template-columns: repeat(4, 1fr); }
+  }
+}
+
+// Responsive flex utilities
+.flex {
+  display: flex;
+  flex-wrap: wrap;
+
+  &.gap-1 { gap: 0.5rem; }
+  &.gap-2 { gap: 1rem; }
+  &.gap-3 { gap: 1.5rem; }
+  &.gap-4 { gap: 2rem; }
+
+  &.center { @include flex-center; }
+  &.between { @include flex-between; }
+  &.column { flex-direction: column; }
+}
+
+// Responsive spacing
+$space-values: ('half': 0.5rem, '1': 1rem, '1-half': 1.5rem, '2': 2rem, '2-half': 2.5rem, '3': 3rem, '4': 4rem, '5': 5rem, '6': 6rem);
+
+@each $space, $rem in $space-values {
+  
+  // Padding
+  .p-#{$space} { padding: $rem; }
+  .px-#{$space} { padding-left: $rem; padding-right: $rem; }
+  .py-#{$space} { padding-top: $rem; padding-bottom: $rem; }
+  .pt-#{$space} { padding-top: $rem; }
+  .pb-#{$space} { padding-bottom: $rem; }
+  .pl-#{$space} { padding-left: $rem; }
+  .pr-#{$space} { padding-right: $rem; }
+
+  // Margin
+  .m-#{$space} { margin: $rem; }
+  .mx-#{$space} { margin-left: $rem; margin-right: $rem; }
+  .my-#{$space} { margin-top: $rem; margin-bottom: $rem; }
+  .mt-#{$space} { margin-top: $rem; }
+  .mb-#{$space} { margin-bottom: $rem; }
+  .ml-#{$space} { margin-left: $rem; }
+  .mr-#{$space} { margin-right: $rem; }
+}
+
+// Responsive font sizes
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-base { font-size: 1rem; line-height: 1.5rem; }
+.text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+.text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+.text-2xl { font-size: 1.5rem; line-height: 2rem; }
+
+@include respond-to('md') {
+  .text-lg { font-size: 1.125rem; }
+  .text-xl { font-size: 1.25rem; }
+  .text-2xl { font-size: 1.5rem; }
+}
+
+// Display utilities
+.d-none { display: none; }
+.d-block { display: block; }
+.d-flex { display: flex; }
+.d-grid { display: grid; }
+.d-inline { display: inline; }
+.d-inline-block { display: inline-block; }
+
+// Responsive display
+@include respond-to('max-md') {
+  .d-none-mobile { display: none; }
+}
+
+@include respond-to('md') {
+  .d-none-desktop { display: none; }
+  .d-block-desktop { display: block; }
+  .d-flex-desktop { display: flex; }
+}
+
+// Width utilities
+.w-100 { width: 100%; }
+.w-auto { width: auto; }
+.w-max { width: max-content; }
+
+// Text utilities
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+.text-truncate { @include text-truncate; }
+.text-clamp-2 { @include text-clamp(2); }
+.text-clamp-3 { @include text-clamp(3); }
+
+// Font weight
+.font-light { font-weight: 300; }
+.font-normal { font-weight: 400; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+// Border utilities
+.border { border: 1px solid var(--border); }
+.border-top { border-top: 1px solid var(--border); }
+.border-bottom { border-bottom: 1px solid var(--border); }
+.border-left { border-left: 1px solid var(--border); }
+.border-right { border-right: 1px solid var(--border); }
+.rounded { border-radius: var(--radius-md); }
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-lg { border-radius: var(--radius-lg); }
