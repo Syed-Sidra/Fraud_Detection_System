@@ -1,0 +1,133 @@
+/* ============================
+   GLOBAL DARK THEME STYLES
+   ============================ */
+@import 'primeng/resources/themes/lara-dark-indigo/theme.css';
+@import 'primeng/resources/primeng.css';
+@import 'primeicons/primeicons.css';
+@import 'primeflex/primeflex.css';
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background: #0f1117;
+  color: #e2e8f0;
+  height: 100%;
+}
+
+/* ---- SCROLLBAR ---- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0f1117; }
+::-webkit-scrollbar-thumb { background: #2d3148; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3d4168; }
+
+/* ---- PRIMENG DARK OVERRIDES ---- */
+.p-component { font-family: inherit; }
+
+/* Table */
+.dark-table .p-datatable-wrapper { border-radius: 0; }
+.dark-table .p-datatable-thead > tr > th {
+  background: #0f1117 !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  border-color: #1e2030 !important;
+  padding: 10px 14px !important;
+}
+.dark-table .p-datatable-tbody > tr {
+  background: #13151e !important;
+  border-color: #1e2030 !important;
+  transition: background .15s;
+}
+.dark-table .p-datatable-tbody > tr:hover {
+  background: #1a1d2e !important;
+}
+.dark-table .p-datatable-tbody > tr > td {
+  border-color: #1e2030 !important;
+  color: #e2e8f0 !important;
+  font-size: 13px !important;
+  padding: 10px 14px !important;
+}
+
+/* Dialog */
+.dark-dialog .p-dialog {
+  background: #13151e !important;
+  border: 1px solid #1e2030 !important;
+  border-radius: 16px !important;
+}
+.dark-dialog .p-dialog-header {
+  background: #13151e !important;
+  border-bottom: 1px solid #1e2030 !important;
+  color: #e2e8f0 !important;
+  padding: 16px 20px !important;
+}
+.dark-dialog .p-dialog-content {
+  background: #13151e !important;
+  padding: 20px !important;
+}
+.dark-dialog .p-dialog-footer {
+  background: #13151e !important;
+  border-top: 1px solid #1e2030 !important;
+  padding: 12px 20px !important;
+}
+
+/* Dropdown */
+.p-dropdown {
+  background: #0f1117 !important;
+  border-color: #2d3148 !important;
+}
+.p-dropdown:hover { border-color: #6366f1 !important; }
+.p-dropdown-panel { background: #13151e !important; border-color: #2d3148 !important; }
+.p-dropdown-item:hover { background: #1e2030 !important; }
+
+/* Input */
+.p-inputtext {
+  background: #0f1117 !important;
+  border-color: #2d3148 !important;
+  color: #e2e8f0 !important;
+}
+.p-inputtext:focus { border-color: #6366f1 !important; box-shadow: 0 0 0 2px rgba(99,102,241,.2) !important; }
+
+/* Button */
+.p-button { border-radius: 8px !important; }
+
+/* Paginator */
+.p-paginator {
+  background: #13151e !important;
+  border: 1px solid #1e2030 !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+}
+.p-paginator .p-paginator-element:not(.p-disabled):hover { background: #1e2030 !important; }
+
+/* Tag */
+.p-tag { font-size: 11px !important; font-weight: 700 !important; border-radius: 6px !important; }
+
+/* Skeleton */
+.p-skeleton { background: #1e2030 !important; }
+.p-skeleton::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.04), transparent) !important; }
+
+/* Password */
+.p-password input { width: 100% !important; }
+
+/* Calendar */
+.p-calendar { width: 100%; }
+.p-datepicker { background: #13151e !important; border-color: #2d3148 !important; }
+
+/* Progress Bar */
+.fraud-bar .p-progressbar { height: 4px !important; border-radius: 2px; }
+.fraud-bar .p-progressbar-value { background: linear-gradient(90deg, #ef4444, #f97316) !important; }
+
+/* Textarea */
+textarea.p-inputtextarea {
+  background: #0f1117 !important;
+  border-color: #2d3148 !important;
+  color: #e2e8f0 !important;
+  resize: vertical;
+}
+
+/* Filter dropdown */
+.filter-dd { min-width: 180px; }
