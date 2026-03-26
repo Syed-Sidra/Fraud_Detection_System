@@ -1,0 +1,1 @@
+["amount", "amount_log", "hour", "day_of_week", "is_odd_hour", "is_weekend", "merchant_risk", "device_risk", "is_high_amount", "is_very_high_amount", "failed_attempts", "is_international", "location_changed", "failed_attempts_normalized", "amount_normalized"]

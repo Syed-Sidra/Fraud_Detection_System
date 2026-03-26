@@ -1,0 +1,25 @@
+{
+  "accuracy_percent": 96.57,
+  "precision": 0.2487,
+  "recall": 0.9062,
+  "f1_score": 0.3903,
+  "roc_auc": 0.9913,
+  "trained_at": "2026-03-26T16:34:37.820174",
+  "type": "RandomForest",
+  "feature_count": 12,
+  "loaded": true,
+  "feature_importances": {
+    "amount": 0.176316,
+    "amount_log": 0.186032,
+    "amount_norm": 0.172333,
+    "step": 0.008225,
+    "hour_proxy": 0.005681,
+    "age_group": 0.003694,
+    "gender_code": 0.002492,
+    "category_risk": 0.090058,
+    "is_high_amount": 0.003042,
+    "is_very_high_amount": 4.8e-05,
+    "is_risky_category": 0.009542,
+    "is_common_category": 0.342536
+  }
+}
