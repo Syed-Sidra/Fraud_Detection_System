@@ -28,8 +28,8 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail);
-            helper.setTo(fromEmail); // In production, send to admin/analyst emails
+            helper.setFrom("sidranoor1205@gmail.com");
+            helper.setTo("sn0255724@gmail.com"); // In production, send to admin/analyst emails
             helper.setSubject("🚨 FRAUD ALERT [" + alert.getSeverity() + "] - Transaction " +
                 alert.getTransaction().getTransactionId());
 

@@ -46,11 +46,11 @@ public class FraudDetectionService {
         if (transaction.getAmount().compareTo(VERY_HIGH_AMOUNT_THRESHOLD) >= 0) {
             triggeredRules.add("VERY_HIGH_VALUE");
             reasons.add("Transaction amount ₹" + transaction.getAmount() + " exceeds ₹100,000 threshold");
-            totalScore += 40;
+            totalScore += 50;
         } else if (transaction.getAmount().compareTo(HIGH_AMOUNT_THRESHOLD) >= 0) {
             triggeredRules.add("HIGH_VALUE");
             reasons.add("Transaction amount ₹" + transaction.getAmount() + " exceeds ₹50,000 threshold");
-            totalScore += 20;
+            totalScore += 30;
         }
 
         // Rule 2: Rapid Multiple Transactions
