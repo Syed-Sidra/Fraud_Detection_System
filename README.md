@@ -140,7 +140,7 @@ Transaction arrives via POST /api/transactions
 - 8 production-grade rules with weighted risk scoring
 - Risk score 0–100 per transaction
 - Every alert shows exact detection reason in plain English
-- Reasons are combined: "Amount ₹47,500 exceeds threshold; Transaction at 3:00 AM"
+- Reasons are combined: "Amount ₹57,500 exceeds threshold; Transaction at 3:00 AM"
 
 ### 🚨 Fraud Alerts System
 - Paginated alert table with severity filter
@@ -463,8 +463,8 @@ Each rule fires independently and adds points to the transaction risk score. Poi
 
 | Rule Name | Trigger Condition | Risk Points Added |
 |-----------|------------------|------------------|
-| `VERY_HIGH_VALUE` | Transaction amount ≥ ₹50,000 | **+40** |
-| `HIGH_VALUE` | Transaction amount ≥ ₹10,000 | **+20** |
+| `VERY_HIGH_VALUE` | Transaction amount ≥ ₹100,000 | **+50** |
+| `HIGH_VALUE` | Transaction amount ≥ ₹50,000 | **+30** |
 | `RAPID_MULTIPLE_TRANSACTIONS` | 3 or more transactions from the same account within 5 minutes | **+30** |
 | `SUSPICIOUS_MERCHANT` | Merchant name contains: CASINO, GAMBLING, CRYPTO, BITCOIN, DARKWEB, OFFSHORE | **+35** |
 | `ODD_HOURS` | Transaction timestamp between 1:00 AM and 5:00 AM | **+15** |
@@ -476,12 +476,12 @@ Each rule fires independently and adds points to the transaction risk score. Poi
 ```
 Transaction: ₹52,000 at Casino Royal at 3:00 AM from London
 
-VERY_HIGH_VALUE      → +50 pts
+HIGH_VALUE           → +30 pts
 SUSPICIOUS_MERCHANT  → +35 pts
 ODD_HOURS            → +15 pts
 LOCATION_MISMATCH    → +25 pts
                        ───────
-Total risk score     →  115 → capped at 100
+Total risk score     →  100
 Fraud status         →  FRAUD
 Severity             →  CRITICAL
 Detection reason     →  "Amount ₹52,000 exceeds ₹50,000 threshold;
@@ -561,7 +561,7 @@ The dataset has ~1.2% fraud (highly imbalanced). Handled by:
 |----------|------------------|-----------------|
 | `MIXED` | 70% normal + 30% fraudulent — realistic mix | ~30% |
 | `NORMAL` | Only legitimate transactions, domestic, small amounts | 0% |
-| `HIGH_VALUE` | All amounts ₹15,000 – ₹1,00,000 | ~80% |
+| `HIGH_VALUE` | All amounts ₹50,000 – ₹1,00,000 | ~80% |
 | `RAPID` | Same account (ACC001) fires rapidly — triggers velocity rule | ~70% |
 | `ODD_HOURS` | All transactions timestamped 1:00 AM – 5:00 AM | ~50% |
 | `SUSPICIOUS_MERCHANT` | Casino Royal, CryptoExchange, GamblingHub | ~90% |
