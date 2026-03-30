@@ -28,10 +28,12 @@ import { ApiService } from '../../../core/services/api.service';
 
         <ul class="nav-menu">
           <li *ngFor="let item of navItems">
-            <a [routerLink]="item.route" routerLinkActive="active" class="nav-item">
+            <a *ngIf="!item.adminOnly || role() === 'ADMIN'"
+               [routerLink]="item.route" routerLinkActive="active" class="nav-item">
               <i [class]="'pi ' + item.icon"></i>
               <span>{{ item.label }}</span>
-              <span *ngIf="item.badge && unreadCount() > 0" class="nav-badge">{{ unreadCount() }}</span>
+              <span *ngIf="item.badge && unreadCount() > 0"
+                    class="nav-badge">{{ unreadCount() }}</span>
             </a>
           </li>
         </ul>
@@ -53,16 +55,12 @@ import { ApiService } from '../../../core/services/api.service';
 
       <!-- MAIN CONTENT -->
       <main class="main-content">
+        <!-- TOPBAR -->
         <header class="topbar">
           <div class="topbar-left">
             <h2 class="page-title">{{ currentPageTitle() }}</h2>
           </div>
           <div class="topbar-right">
-            <!-- Role display badge — security indicator -->
-            <div class="role-indicator">
-              <i class="pi" [class]="role() === 'ADMIN' ? 'pi-user-edit' : 'pi-eye'"></i>
-              <span>{{ role() }}</span>
-            </div>
             <div class="simulation-badge" *ngIf="simRunning()">
               <span class="sim-dot"></span>
               <span class="sim-text">Simulation Running</span>
@@ -73,6 +71,7 @@ import { ApiService } from '../../../core/services/api.service';
             </button>
           </div>
         </header>
+
         <div class="content-area">
           <router-outlet></router-outlet>
         </div>
@@ -80,75 +79,101 @@ import { ApiService } from '../../../core/services/api.service';
     </div>
   `,
   styles: [`
-    .layout-wrapper { display:flex; height:100vh; overflow:hidden; background:#0f1117; }
+    .layout-wrapper { display: flex; height: 100vh; overflow: hidden; background: #0f1117; }
 
-    .sidebar { width:240px; min-width:240px; background:#13151e; border-right:1px solid #1e2030; display:flex; flex-direction:column; }
-    .sidebar-header { padding:20px 16px; border-bottom:1px solid #1e2030; }
-    .brand { display:flex; align-items:center; gap:10px; }
-    .brand-icon { font-size:24px; color:#6366f1; }
-    .brand-text { font-size:18px; font-weight:700; color:#e2e8f0;
-      background:linear-gradient(135deg,#6366f1,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px; min-width: 240px; background: #13151e;
+      border-right: 1px solid #1e2030;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-header { padding: 20px 16px; border-bottom: 1px solid #1e2030; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-icon { font-size: 24px; color: #6366f1; }
+    .brand-text { font-size: 18px; font-weight: 700; color: #e2e8f0;
+      background: linear-gradient(135deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-    .nav-menu { list-style:none; margin:0; padding:12px 0; flex:1; overflow-y:auto; }
-    .nav-item { display:flex; align-items:center; gap:12px; padding:11px 20px;
-      color:#94a3b8; text-decoration:none; transition:all .2s; position:relative;
-      font-size:14px; font-weight:500; }
-    .nav-item:hover { background:#1e2030; color:#e2e8f0; }
-    .nav-item.active { background:linear-gradient(90deg,rgba(99,102,241,.2),transparent); color:#6366f1; border-left:3px solid #6366f1; }
-    .nav-item .pi { font-size:16px; width:20px; text-align:center; }
-    .nav-badge { margin-left:auto; background:#ef4444; color:#fff; font-size:11px; font-weight:700;
-      padding:2px 7px; border-radius:10px; min-width:20px; text-align:center; animation:pulse 2s infinite; }
+    .nav-menu { list-style: none; margin: 0; padding: 12px 0; flex: 1; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 20px;
+      color: #94a3b8; text-decoration: none; transition: all .2s; position: relative;
+      font-size: 14px; font-weight: 500;
+    }
+    .nav-item:hover { background: #1e2030; color: #e2e8f0; }
+    .nav-item.active {
+      background: linear-gradient(90deg, rgba(99,102,241,.2), transparent);
+      color: #6366f1; border-left: 3px solid #6366f1;
+    }
+    .nav-item .pi { font-size: 16px; width: 20px; text-align: center; }
+    .nav-badge {
+      margin-left: auto; background: #ef4444; color: #fff;
+      font-size: 11px; font-weight: 700; padding: 2px 7px;
+      border-radius: 10px; min-width: 20px; text-align: center;
+      animation: pulse 2s infinite;
+    }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
 
-    .nav-section-label { padding:10px 20px 4px; font-size:10px; color:#475569; text-transform:uppercase; font-weight:600; letter-spacing:1px; }
+    .sidebar-footer {
+      padding: 16px; border-top: 1px solid #1e2030;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .user-info { display: flex; align-items: center; gap: 10px; }
+    .user-name { font-size: 13px; font-weight: 600; color: #e2e8f0; }
+    .logout-btn { color: #ef4444 !important; }
 
-    .sidebar-footer { padding:16px; border-top:1px solid #1e2030; display:flex; align-items:center; justify-content:space-between; }
-    .user-info { display:flex; align-items:center; gap:10px; }
-    .user-name { font-size:13px; font-weight:600; color:#e2e8f0; }
-    .logout-btn { color:#ef4444 !important; }
+    /* MAIN */
+    .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .topbar {
+      height: 60px; background: #13151e; border-bottom: 1px solid #1e2030;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+    }
+    .page-title { margin: 0; font-size: 18px; font-weight: 600; color: #e2e8f0; }
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
 
-    .main-content { flex:1; display:flex; flex-direction:column; overflow:hidden; }
-    .topbar { height:60px; background:#13151e; border-bottom:1px solid #1e2030;
-      display:flex; align-items:center; justify-content:space-between; padding:0 24px; }
-    .page-title { margin:0; font-size:18px; font-weight:600; color:#e2e8f0; }
-    .topbar-right { display:flex; align-items:center; gap:14px; }
+    .simulation-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(34,197,94,.15); border: 1px solid rgba(34,197,94,.3);
+      padding: 4px 12px; border-radius: 20px;
+    }
+    .sim-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 1.5s infinite; }
+    .sim-text { font-size: 12px; color: #22c55e; font-weight: 600; }
 
-    .role-indicator { display:flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px;
-      background:rgba(99,102,241,.12); border:1px solid rgba(99,102,241,.25); font-size:11px; font-weight:700; color:#a5b4fc; }
+    .alert-btn { position: relative; color: #94a3b8 !important; }
+    .alert-count {
+      position: absolute; top: -4px; right: -4px;
+      background: #ef4444; color: #fff; font-size: 10px; font-weight: 700;
+      width: 18px; height: 18px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      animation: pulse 2s infinite;
+    }
 
-    .simulation-badge { display:flex; align-items:center; gap:8px; background:rgba(34,197,94,.15);
-      border:1px solid rgba(34,197,94,.3); padding:4px 12px; border-radius:20px; }
-    .sim-dot { width:8px; height:8px; border-radius:50%; background:#22c55e; animation:pulse 1.5s infinite; }
-    .sim-text { font-size:12px; color:#22c55e; font-weight:600; }
-
-    .alert-btn { position:relative; color:#94a3b8 !important; }
-    .alert-count { position:absolute; top:-4px; right:-4px; background:#ef4444; color:#fff;
-      font-size:10px; font-weight:700; width:18px; height:18px; border-radius:50%;
-      display:flex; align-items:center; justify-content:center; animation:pulse 2s infinite; }
-
-    .content-area { flex:1; overflow-y:auto; padding:24px; }
+    .content-area { flex: 1; overflow-y: auto; padding: 24px; }
   `]
 })
 export class LayoutComponent implements OnInit, OnDestroy {
   unreadCount = signal(0);
-  simRunning  = signal(false);
+  simRunning = signal(false);
   private pollSub?: Subscription;
 
   navItems = [
-    { label: 'Dashboard',      route: '/dashboard',     icon: 'pi-th-large',              badge: false },
-    { label: 'Live Feed',      route: '/transactions',  icon: 'pi-list',                  badge: false },
-    { label: 'Fraud Alerts',   route: '/alerts',        icon: 'pi-exclamation-triangle',  badge: true  },
-    { label: 'Analytics',      route: '/analytics',     icon: 'pi-chart-bar',             badge: false },
-    { label: 'Simulation',     route: '/simulation',    icon: 'pi-play-circle',           badge: false },
-    // ── NEW ──
-    { label: 'ML Insights',    route: '/ml-insights',   icon: 'pi-microchip-ai',          badge: false },
-    { label: 'System Status',  route: '/system-status', icon: 'pi-server',                badge: false },
+    { label: 'Dashboard',     route: '/dashboard',     icon: 'pi-th-large',             badge: false, adminOnly: false },
+    { label: 'Live Feed',     route: '/transactions',  icon: 'pi-list',                  badge: false, adminOnly: false },
+    { label: 'Fraud Alerts',  route: '/alerts',        icon: 'pi-exclamation-triangle',  badge: true,  adminOnly: false },
+    { label: 'Analytics',     route: '/analytics',     icon: 'pi-chart-bar',             badge: false, adminOnly: false },
+    { label: 'Simulation',    route: '/simulation',    icon: 'pi-play-circle',           badge: false, adminOnly: true  },
+    { label: 'ML Insights',   route: '/ml-insights',   icon: 'pi-microchip-ai',          badge: false, adminOnly: true  },
+    { label: 'System Status', route: '/system-status', icon: 'pi-server',                badge: false, adminOnly: false },
   ];
 
-  constructor(private auth: AuthService, private api: ApiService, private router: Router) {}
+  constructor(
+    private auth: AuthService,
+    private api: ApiService,
+    private router: Router
+  ) {}
 
-  username    = () => this.auth.currentUser()?.username ?? '';
-  role        = () => this.auth.currentUser()?.role ?? '';
+  username = () => this.auth.currentUser()?.username ?? '';
+  role = () => this.auth.currentUser()?.role ?? '';
   userInitial = () => (this.auth.currentUser()?.username ?? 'U')[0].toUpperCase();
 
   currentPageTitle() {
@@ -165,13 +190,16 @@ export class LayoutComponent implements OnInit, OnDestroy {
       this.refreshSimStatus();
     });
   }
+
   ngOnDestroy() { this.pollSub?.unsubscribe(); }
 
   private refreshAlertCount() {
     this.api.getUnreadCount().subscribe(r => this.unreadCount.set(r.count));
   }
+
   private refreshSimStatus() {
     this.api.getSimulationStatus().subscribe(s => this.simRunning.set(s.running));
   }
+
   logout() { this.auth.logout(); }
 }
