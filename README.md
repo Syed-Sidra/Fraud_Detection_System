@@ -48,7 +48,7 @@ The analyst doesn't just see "FRAUD" — they see *exactly why*: "3 transactions
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                  Angular Frontend (Port 4200)                 │
+│                  Angular Frontend (Port 4200)                │
 │                                                              │
 │  Dashboard │ Live Feed │ Alerts │ Analytics │ Simulation     │
 │  ML Insights │ System Status │ Login │ Register              │
@@ -59,22 +59,22 @@ The analyst doesn't just see "FRAUD" — they see *exactly why*: "3 transactions
 ┌──────────────────────────────────────────────────────────────┐
 │               Spring Boot Backend (Port 8080)                │
 │                                                              │
-│  ┌─────────────────┐   ┌─────────────────┐                  │
+│  ┌─────────────────┐   ┌─────────────────┐                   │
 │  │  JWT Auth Layer │   │  Fraud Rule      │                  │
 │  │  BCrypt + JJWT  │   │  Engine (8 rules)│                  │
-│  └─────────────────┘   └─────────────────┘                  │
-│  ┌─────────────────┐   ┌─────────────────┐                  │
+│  └─────────────────┘   └─────────────────┘                   │
+│  ┌─────────────────┐   ┌─────────────────┐                   │
 │  │  REST API Layer │   │  Email Service   │                  │
 │  │  17 endpoints   │   │  @Async SMTP     │                  │
-│  └─────────────────┘   └─────────────────┘                  │
-│  ┌─────────────────┐   ┌─────────────────┐                  │
+│  └─────────────────┘   └─────────────────┘                   │
+│  ┌─────────────────┐   ┌─────────────────┐                   │
 │  │  Simulation     │   │  ML Client       │                  │
 │  │  @Scheduled 3s  │   │  RestTemplate    │                  │
-│  └─────────────────┘   └─────────────────┘                  │
-└──────────────┬──────────────────────────────┬───────────────┘
+│  └─────────────────┘   └─────────────────┘                   │
+└──────────────┬──────────────────────────────┬────────────────┘
                │ JPA / Hibernate              │ REST JSON
                ▼                              ▼
-┌──────────────────────┐       ┌──────────────────────────────┐
+┌──────────────────────┐       ┌───────────────────────────────┐
 │   MySQL Database     │       │   Python ML Service           │
 │   Port 3306          │       │   FastAPI — Port 8000         │
 │                      │       │                               │
@@ -84,7 +84,7 @@ The analyst doesn't just see "FRAUD" — they see *exactly why*: "3 transactions
 │   • simulation_logs  │       │   • POST /train               │
 └──────────────────────┘       │   • GET  /model/info          │
                                │   • GET  /health              │
-                               └──────────────────────────────┘
+                               └───────────────────────────────┘
 ```
 
 ### Data Flow for a Single Transaction
