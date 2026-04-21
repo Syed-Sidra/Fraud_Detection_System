@@ -16,14 +16,16 @@ export const routes: Routes = [
     loadComponent: () => import('./shared/components/layout/layout.component').then(m => m.LayoutComponent),
     canActivate: [authGuard],
     children: [
-      { path: 'dashboard',     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
-      { path: 'transactions',  loadComponent: () => import('./features/transactions/transactions.component').then(m => m.TransactionsComponent) },
-      { path: 'alerts',        loadComponent: () => import('./features/alerts/alerts.component').then(m => m.AlertsComponent) },
-      { path: 'analytics',     loadComponent: () => import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent) },
-      { path: 'simulation',    loadComponent: () => import('./features/simulation/simulation.component').then(m => m.SimulationComponent) },
-      // ── NEW ROUTES ─────────────────────────────────────────────────────────────
-      { path: 'system-status', loadComponent: () => import('./features/system-status/system-status.component').then(m => m.SystemStatusComponent) },
-      { path: 'ml-insights',   loadComponent: () => import('./features/ml-insights/ml-insights.component').then(m => m.MlInsightsComponent) },
+      { path: 'dashboard',        loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+      { path: 'transactions',     loadComponent: () => import('./features/transactions/transactions.component').then(m => m.TransactionsComponent) },
+      { path: 'alerts',           loadComponent: () => import('./features/alerts/alerts.component').then(m => m.AlertsComponent) },
+      { path: 'analytics',        loadComponent: () => import('./features/analytics/analytics.component').then(m => m.AnalyticsComponent) },
+      { path: 'simulation',       loadComponent: () => import('./features/simulation/simulation.component').then(m => m.SimulationComponent) },
+      { path: 'ml-insights',      loadComponent: () => import('./features/ml-insights/ml-insights.component').then(m => m.MlInsightsComponent) },
+      { path: 'system-status',    loadComponent: () => import('./features/system-status/system-status.component').then(m => m.SystemStatusComponent) },
+      // ── NEW EASY FEATURES ─────────────────────────────────────────────────
+      { path: 'user-management',  loadComponent: () => import('./features/user-management/user-management.component').then(m => m.UserManagementComponent) },
+      { path: 'audit-log',        loadComponent: () => import('./features/audit-log/audit-log.component').then(m => m.AuditLogComponent) },
     ]
   },
   { path: '**', redirectTo: 'dashboard' }

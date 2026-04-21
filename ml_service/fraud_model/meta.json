@@ -4,7 +4,7 @@
   "recall": 0.9062,
   "f1_score": 0.3903,
   "roc_auc": 0.9913,
-  "trained_at": "2026-03-26T16:34:37.820174",
+  "trained_at": "2026-04-18T20:36:54.177049",
   "type": "RandomForest",
   "feature_count": 12,
   "loaded": true,

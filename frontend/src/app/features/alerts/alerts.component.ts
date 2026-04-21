@@ -1,3 +1,4 @@
+  import { ExportService } from '../../shared/services/export.service';
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -51,6 +52,10 @@ import { FraudAlert, Severity } from '../../shared/models/models';
                       (onChange)="onFilter()"></p-dropdown>
           <button pButton label="Mark All Read" icon="pi pi-check-square"
                   class="p-button-outlined p-button-sm" (click)="markAllRead()"></button>
+
+                   <button pButton label="Export CSV" icon="pi pi-download"
+                            class="p-button-outlined p-button-sm"
+                            (click)="exportCsv()"></button>
         </div>
       </div>
 
@@ -315,7 +320,7 @@ export class AlertsComponent implements OnInit {
     { label: 'Low', value: 'LOW' }
   ];
 
-  constructor(private api: ApiService, private msg: MessageService) {}
+  constructor(private api: ApiService, private msg: MessageService, private exportSvc: ExportService) {}
 
   ngOnInit() { this.load(); this.loadCritical(); this.refreshUnread(); }
 
@@ -325,6 +330,15 @@ export class AlertsComponent implements OnInit {
       next: r => { this.alerts.set(r.content); this.totalElements.set(r.totalElements); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
+  }
+
+ exportCsv() {
+    this.exportSvc.exportAlertsToCsv(
+      this.alerts(),
+      `fraud-alerts-${new Date().toISOString().slice(0,10)}.csv`
+    );
+    this.msg.add({ severity: 'info', summary: 'Exported',
+      detail: `${this.alerts().length} alerts downloaded as CSV` });
   }
 
   loadCritical() {

@@ -1,3 +1,4 @@
+import { ExportService } from '../../shared/services/export.service';
 import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -55,9 +56,24 @@ import { Transaction } from '../../shared/models/models';
                         placeholder="Select dates" styleClass="filter-dd"
                         [readonlyInput]="true" (onSelect)="onDateSelect()"></p-calendar>
           </div>
+
+          <div class="filter-group">
+                    <label>Transaction ID</label>
+                    <div style="display:flex;gap:6px">
+                      <input pInputText [(ngModel)]="searchTxnId"
+                             placeholder="TXN123..." style="width:170px;height:38px"
+                             (keyup.enter)="searchById()" />
+                      <button pButton icon="pi pi-search" class="p-button-sm"
+                              pTooltip="Search by ID" (click)="searchById()"></button>
+                    </div>
+                  </div>
+
           <div class="filter-actions">
             <button pButton label="Search" icon="pi pi-search" (click)="onFilter()"></button>
             <button pButton label="Reset" icon="pi pi-refresh" class="p-button-outlined" (click)="resetFilters()"></button>
+            <button pButton icon="pi pi-download" label="Export CSV"
+                      class="p-button-outlined p-button-sm" (click)="exportCsv()"></button>
+
           </div>
         </div>
       </div>
@@ -167,6 +183,27 @@ import { Transaction } from '../../shared/models/models';
           </div>
         </div>
       </p-dialog>
+      <p-dialog [(visible)]="showSearchDialog" header="Transaction Found"
+                  [modal]="true" [style]="{width:'600px'}" styleClass="dark-dialog">
+          <div *ngIf="searchResult" class="txn-detail">
+            <div class="detail-header" [class]="'fraud-' + searchResult.fraudStatus.toLowerCase()">
+              <div class="detail-id">{{ searchResult.transactionId }}</div>
+              <p-tag [value]="searchResult.fraudStatus"
+                     [severity]="fraudSeverity(searchResult.fraudStatus)"></p-tag>
+            </div>
+            <div class="detail-grid">
+              <div class="detail-item"><span class="dl">Account</span><span class="dv">{{ searchResult.accountNumber }}</span></div>
+              <div class="detail-item"><span class="dl">Amount</span><span class="dv amount">₹{{ searchResult.amount | number:'1.2-2' }}</span></div>
+              <div class="detail-item"><span class="dl">Merchant</span><span class="dv">{{ searchResult.merchantName }}</span></div>
+              <div class="detail-item"><span class="dl">Location</span><span class="dv">{{ searchResult.location }}</span></div>
+              <div class="detail-item"><span class="dl">Risk Score</span><span class="dv">{{ searchResult.riskScore }}</span></div>
+              <div class="detail-item"><span class="dl">Timestamp</span><span class="dv">{{ searchResult.timestamp | date:'dd MMM yyyy HH:mm:ss' }}</span></div>
+            </div>
+          </div>
+          <div *ngIf="!searchResult" class="empty-msg">
+            <i class="pi pi-search"></i><br>Transaction "{{ searchTxnId }}" not found.
+          </div>
+        </p-dialog>
     </div>
   `,
   styles: [`
@@ -174,6 +211,8 @@ import { Transaction } from '../../shared/models/models';
 
     .filters-card {
       background:#13151e; border:1px solid #1e2030; border-radius:12px; padding:16px;
+
+
     }
     .filters-row { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
     .filter-group { display:flex; flex-direction:column; gap:4px; }
@@ -238,6 +277,9 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   selectedTxn: Transaction | null = null;
   dateRange: Date[] = [];
   private sub?: Subscription;
+  searchTxnId = '';
+  searchResult: Transaction | null = null;
+  showSearchDialog = false;
 
   filters: any = { fraudStatus: null, accountNumber: '', minAmount: null, maxAmount: null };
 
@@ -248,7 +290,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     { label: 'Fraud', value: 'FRAUD' }
   ];
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private exportSvc: ExportService) {}
 
   ngOnInit() {
     this.load();
@@ -271,6 +313,22 @@ export class TransactionsComponent implements OnInit, OnDestroy {
       error: () => this.loading.set(false)
     });
   }
+
+searchById() {
+    if (!this.searchTxnId.trim()) return;
+    this.api.getTransactionById(this.searchTxnId.trim()).subscribe({
+      next: (t) => { this.searchResult = t; this.showSearchDialog = true; },
+      error: () => this.searchResult = null
+    });
+  }
+
+  exportCsv() {
+    this.exportSvc.exportTransactionsToCsv(
+      this.transactions(),
+      `transactions-${new Date().toISOString().slice(0,10)}.csv`
+    );
+  }
+
 
   onFilter() { this.currentPage.set(0); this.load(); }
   onDateSelect() { if (this.dateRange[1]) this.onFilter(); }
