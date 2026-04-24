@@ -1,7 +1,6 @@
 package com.frauddetection.service;
 
 import com.frauddetection.entity.FraudAlert;
-import com.frauddetection.entity.Transaction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +10,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import jakarta.mail.internet.MimeMessage;
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -19,96 +19,149 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+    @Value("${spring.mail.username:}")
+    private String senderEmail;
 
+    @Value("${app.alert.email:}")
+    private String alertEmail;
+
+    // ── Main alert email (original signature — takes FraudAlert) ─────────
     @Async
     public void sendFraudAlertEmail(FraudAlert alert) {
+        if (alertEmail == null || alertEmail.isBlank()) return;
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom("sidranoor1205@gmail.com");
-            helper.setTo("sn0255724@gmail.com"); // In production, send to admin/analyst emails
-            helper.setSubject("🚨 FRAUD ALERT [" + alert.getSeverity() + "] - Transaction " +
-                alert.getTransaction().getTransactionId());
-
-            Transaction txn = alert.getTransaction();
-            String html = buildEmailHtml(alert, txn);
-            helper.setText(html, true);
-
-            mailSender.send(message);
-            log.info("Fraud alert email sent for transaction: {}", txn.getTransactionId());
+            MimeMessage msg = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
+            helper.setFrom(senderEmail);
+            helper.setTo(alertEmail);
+            helper.setSubject("🚨 FraudGuard Alert — "
+                    + alert.getSeverity() + " | "
+                    + (alert.getTransaction() != null
+                    ? alert.getTransaction().getTransactionId()
+                    : "Unknown"));
+            helper.setText(buildHtml(alert), true);
+            mailSender.send(msg);
+            log.info("Fraud alert email sent for alert id={}", alert.getId());
         } catch (Exception e) {
-            log.error("Failed to send fraud alert email: {}", e.getMessage());
+            log.error("Email send failed: {}", e.getMessage());
         }
     }
 
-    private String buildEmailHtml(FraudAlert alert, Transaction txn) {
+    // ── Test email ────────────────────────────────────────────────────────
+    @Async
+    public void sendTestEmail() {
+        if (alertEmail == null || alertEmail.isBlank()) return;
+        try {
+            MimeMessage msg = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
+            helper.setFrom(senderEmail);
+            helper.setTo(alertEmail);
+            helper.setSubject("✅ FraudGuard — SMTP Test Successful");
+            helper.setText(
+                    "<h2 style='color:#22c55e'>SMTP is configured correctly!</h2>" +
+                            "<p>FraudGuard Voting Ensemble ML system is active.</p>", true);
+            mailSender.send(msg);
+        } catch (Exception e) {
+            log.error("Test email failed: {}", e.getMessage());
+        }
+    }
+
+    // ── HTML email builder ────────────────────────────────────────────────
+    private String buildHtml(FraudAlert alert) {
         String severityColor = switch (alert.getSeverity()) {
             case CRITICAL -> "#dc2626";
-            case HIGH -> "#ea580c";
-            case MEDIUM -> "#d97706";
-            case LOW -> "#16a34a";
+            case HIGH     -> "#ea580c";
+            case MEDIUM   -> "#d97706";
+            default       -> "#16a34a";
         };
 
+        // Extract transaction details safely
+        String txnId      = alert.getTransaction() != null ? alert.getTransaction().getTransactionId() : "N/A";
+        String account    = alert.getTransaction() != null ? alert.getTransaction().getAccountNumber() : "N/A";
+        String merchant   = alert.getTransaction() != null && alert.getTransaction().getMerchantName() != null
+                ? alert.getTransaction().getMerchantName() : "N/A";
+        String location   = alert.getTransaction() != null && alert.getTransaction().getLocation() != null
+                ? alert.getTransaction().getLocation() : "N/A";
+        String timestamp  = alert.getTransaction() != null && alert.getTransaction().getTimestamp() != null
+                ? alert.getTransaction().getTimestamp().toString() : "N/A";
+
+        // amount is BigDecimal — format safely
+        String amountStr = "N/A";
+        if (alert.getTransaction() != null && alert.getTransaction().getAmount() != null) {
+            BigDecimal amt = alert.getTransaction().getAmount();
+            amountStr = String.format("₹%,.2f", amt.doubleValue());
+        }
+
+        // ML ensemble breakdown (if available)
+        String mlRow = "";
+        if (alert.getMlFraudProbability() != null && alert.getMlFraudProbability() > 0) {
+            mlRow = String.format(
+                    "<tr><td style='padding:8px;font-weight:bold;background:#f8fafc'>ML Ensemble</td>" +
+                            "<td style='padding:8px'>P(fraud)=%.1f%%&nbsp;&nbsp;" +
+                            "RF=%.1f%%&nbsp;|&nbsp;GB=%.1f%%&nbsp;|&nbsp;LR=%.1f%%</td></tr>",
+                    alert.getMlFraudProbability() * 100,
+                    alert.getMlRfProbability() != null ? alert.getMlRfProbability() * 100 : 0,
+                    alert.getMlGbProbability() != null ? alert.getMlGbProbability() * 100 : 0,
+                    alert.getMlLrProbability() != null ? alert.getMlLrProbability() * 100 : 0
+            );
+        }
+
         return """
-            <!DOCTYPE html>
-            <html>
-            <head><style>
-              body { font-family: Arial, sans-serif; background: #f3f4f6; margin: 0; padding: 20px; }
-              .container { max-width: 600px; margin: auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-              .header { background: %s; color: white; padding: 24px; text-align: center; }
-              .header h1 { margin: 0; font-size: 24px; }
-              .body { padding: 24px; }
-              .badge { display: inline-block; background: %s; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; }
-              .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
-              .label { color: #6b7280; font-size: 14px; }
-              .value { font-weight: 600; font-size: 14px; }
-              .reason-box { background: #fef2f2; border-left: 4px solid %s; padding: 16px; margin: 16px 0; border-radius: 0 8px 8px 0; }
-              .footer { background: #f9fafb; padding: 16px; text-align: center; color: #6b7280; font-size: 12px; }
-            </style></head>
-            <body>
-            <div class="container">
-              <div class="header">
-                <h1>🚨 Fraud Alert Detected</h1>
-                <p style="margin:8px 0 0">Severity: <span class="badge">%s</span></p>
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;
+                        border:1px solid #e5e7eb;border-radius:12px;overflow:hidden">
+              <div style="background:%s;padding:24px;text-align:center">
+                <h1 style="color:white;margin:0;font-size:22px">
+                  🚨 FRAUD ALERT — %s
+                </h1>
               </div>
-              <div class="body">
-                <h3 style="color:#111827;margin-top:0">Transaction Details</h3>
-                <div class="info-row"><span class="label">Transaction ID</span><span class="value">%s</span></div>
-                <div class="info-row"><span class="label">Account</span><span class="value">%s</span></div>
-                <div class="info-row"><span class="label">Amount</span><span class="value" style="color:#dc2626;font-size:18px">₹%s</span></div>
-                <div class="info-row"><span class="label">Merchant</span><span class="value">%s</span></div>
-                <div class="info-row"><span class="label">Location</span><span class="value">%s</span></div>
-                <div class="info-row"><span class="label">Timestamp</span><span class="value">%s</span></div>
-                <div class="info-row"><span class="label">Risk Score</span><span class="value" style="color:%s">%.1f / 100</span></div>
-                <div class="info-row"><span class="label">Rule Triggered</span><span class="value">%s</span></div>
-                <div class="reason-box">
-                  <strong style="color:%s">⚠️ Detection Reason:</strong>
-                  <p style="margin:8px 0 0;color:#374151">%s</p>
+              <div style="padding:24px;text-align:center;background:#fafafa;
+                          border-bottom:1px solid #e5e7eb">
+                <div style="font-size:36px;font-weight:bold;color:%s">%s</div>
+                <div style="color:#6b7280;margin-top:4px">Transaction Amount</div>
+                <div style="margin-top:12px">
+                  <span style="background:%s;color:white;padding:4px 16px;
+                               border-radius:20px;font-size:13px;font-weight:600">
+                    Risk Score: %.0f / 100
+                  </span>
                 </div>
-                <p style="color:#6b7280;font-size:13px">Please log in to the Fraud Detection Dashboard to review and resolve this alert immediately.</p>
               </div>
-              <div class="footer">
-                <p>Digital Banking Fraud Detection System | Automated Alert</p>
-                <p>© 2024 Fraud Detection Platform. Do not reply to this email.</p>
+              <div style="padding:16px 24px;background:#fff7ed;
+                          border-left:4px solid %s;margin:16px">
+                <strong style="color:#92400e">Detection Reason:</strong>
+                <p style="color:#78350f;margin:4px 0 0">%s</p>
+              </div>
+              <div style="padding:0 24px 24px">
+                <table style="width:100%%;border-collapse:collapse;font-size:13px">
+                  <tr><td style='padding:8px;font-weight:bold;background:#f8fafc'>Transaction ID</td>
+                      <td style='padding:8px'>%s</td></tr>
+                  <tr><td style='padding:8px;font-weight:bold;background:#f8fafc'>Account</td>
+                      <td style='padding:8px'>%s</td></tr>
+                  <tr><td style='padding:8px;font-weight:bold;background:#f8fafc'>Merchant</td>
+                      <td style='padding:8px'>%s</td></tr>
+                  <tr><td style='padding:8px;font-weight:bold;background:#f8fafc'>Location</td>
+                      <td style='padding:8px'>%s</td></tr>
+                  <tr><td style='padding:8px;font-weight:bold;background:#f8fafc'>Rule Triggered</td>
+                      <td style='padding:8px'>%s</td></tr>
+                  %s
+                  <tr><td style='padding:8px;font-weight:bold;background:#f8fafc'>Timestamp</td>
+                      <td style='padding:8px'>%s</td></tr>
+                </table>
+              </div>
+              <div style="padding:16px 24px;background:#f1f5f9;text-align:center;
+                          font-size:12px;color:#94a3b8">
+                FraudGuard — Voting Ensemble (RF + GB + LR) · Hybrid Detection
               </div>
             </div>
-            </body></html>
             """.formatted(
-                severityColor, severityColor, severityColor,
-                alert.getSeverity(),
-                txn.getTransactionId(),
-                txn.getAccountNumber(),
-                txn.getAmount(),
-                txn.getMerchantName() != null ? txn.getMerchantName() : "N/A",
-                txn.getLocation() != null ? txn.getLocation() : "N/A",
-                txn.getTimestamp(),
-                severityColor, alert.getRiskScore(),
-                alert.getRuleTriggered(),
+                severityColor, alert.getSeverity(),
+                severityColor, amountStr,
+                severityColor, alert.getRiskScore() != null ? alert.getRiskScore() : 0.0,
                 severityColor,
-                alert.getFraudReason()
-            );
+                alert.getFraudReason() != null ? alert.getFraudReason() : "N/A",
+                txnId, account, merchant, location,
+                alert.getRuleTriggered() != null ? alert.getRuleTriggered() : "N/A",
+                mlRow,
+                timestamp
+        );
     }
 }

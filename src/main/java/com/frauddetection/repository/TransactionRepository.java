@@ -65,4 +65,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     @Query("SELECT t.accountNumber, COUNT(t) as cnt FROM Transaction t WHERE t.fraudStatus = 'FRAUD' GROUP BY t.accountNumber ORDER BY cnt DESC")
     List<Object[]> getHighRiskAccounts(Pageable pageable);
+
+    Page<Transaction> findByAccountNumberContainingIgnoreCase(String accountNumber, Pageable pageable);
 }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,52 +19,133 @@ public class MlService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public record MlPrediction(boolean isFraud, double confidence, double riskScore, double fraudProbability) {}
+    // ── Is the ML service reachable? ─────────────────────────────────────
+    public boolean isAvailable() {
+        try {
+            ResponseEntity<Map> resp = restTemplate
+                    .getForEntity(mlUrl + "/health", Map.class);
+            return resp.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            log.warn("ML service unavailable: {}", e.getMessage());
+            return false;
+        }
+    }
 
-    public MlPrediction predict(double amount, int hour, int dayOfWeek,
-                                String merchantCategory, String deviceType,
-                                String transactionType, int failedAttempts,
-                                boolean isInternational, boolean locationChanged) {
+    // ── Main predict call — returns ensemble result ───────────────────────
+    /**
+     * Returns a map containing:
+     *   is_fraud           boolean
+     *   confidence         double  (0-100)
+     *   fraud_probability  double  (0-1)
+     *   rf_probability     double  (0-1)  — Random Forest individual
+     *   gb_probability     double  (0-1)  — Gradient Boosting individual
+     *   lr_probability     double  (0-1)  — Logistic Regression individual
+     *   risk_score         double  (0-100)
+     *   model_used         String  "VotingEnsemble (RF:0.4 + GB:0.4 + LR:0.2)"
+     */
+    public Map<String, Object> predict(BigDecimal amount, String category,
+                                       String gender, String age, int step) {
         try {
             Map<String, Object> body = new HashMap<>();
-            body.put("amount", amount);
-            body.put("hour", hour);
-            body.put("day_of_week", dayOfWeek);
-            body.put("merchant_category", merchantCategory != null ? merchantCategory : "UNKNOWN");
-            body.put("device_type", deviceType != null ? deviceType : "UNKNOWN");
-            body.put("transaction_type", transactionType != null ? transactionType : "DEBIT");
-            body.put("failed_attempts", failedAttempts);
-            body.put("is_international", isInternational);
-            body.put("location_changed", locationChanged);
+            body.put("amount",            amount);
+            body.put("category",          category != null ? category : "es_transportation");
+            body.put("gender",            gender   != null ? gender   : "M");
+            body.put("age",               age      != null ? age      : "3");
+            body.put("step",              step);
+            body.put("merchant_category", category != null ? category : "es_transportation");
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                mlUrl + "/predict", entity, Map.class
-            );
+            ResponseEntity<Map> resp = restTemplate.postForEntity(
+                    mlUrl + "/predict", entity, Map.class);
 
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                Map<String, Object> res = response.getBody();
-                boolean fraud = Boolean.TRUE.equals(res.get("is_fraud"));
-                double conf = ((Number) res.getOrDefault("confidence", 0)).doubleValue();
-                double risk = ((Number) res.getOrDefault("risk_score", 0)).doubleValue();
-                double prob = ((Number) res.getOrDefault("fraud_probability", 0)).doubleValue();
-                return new MlPrediction(fraud, conf, risk, prob);
+            if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                return resp.getBody();
             }
         } catch (Exception e) {
-            log.warn("ML service unavailable: {}", e.getMessage());
+            log.error("ML predict error: {}", e.getMessage());
         }
-        return new MlPrediction(false, 0, 0, 0);
+        return fallbackResult();
     }
 
-    public boolean isAvailable() {
+    // ── Simplified predict used by TransactionService ────────────────────
+    public MlPrediction predictTransaction(BigDecimal amount, String merchantCategory) {
+        Map<String, Object> raw = predict(amount, merchantCategory, "M", "3", 0);
+        return parsePrediction(raw);
+    }
+
+    // ── Parse raw map into typed DTO ──────────────────────────────────────
+    public MlPrediction parsePrediction(Map<String, Object> raw) {
+        if (raw == null) return new MlPrediction(false, 0.0, 0.0, 0.0, 0.0, 0.0, "unavailable");
+
+        boolean isFraud   = Boolean.TRUE.equals(raw.get("is_fraud"));
+        double  conf      = toDouble(raw.get("confidence"));
+        double  prob      = toDouble(raw.get("fraud_probability"));
+        double  rfProb    = toDouble(raw.get("rf_probability"));
+        double  gbProb    = toDouble(raw.get("gb_probability"));
+        double  lrProb    = toDouble(raw.get("lr_probability"));
+        String  model     = raw.getOrDefault("model_used", "VotingEnsemble").toString();
+
+        return new MlPrediction(isFraud, conf, prob, rfProb, gbProb, lrProb, model);
+    }
+
+    // ── Get compare data for ML Insights ─────────────────────────────────
+    public Map getCompareData() {
         try {
-            ResponseEntity<Map> resp = restTemplate.getForEntity(mlUrl + "/health", Map.class);
-            return resp.getStatusCode() == HttpStatus.OK;
+            ResponseEntity<Map> resp = restTemplate
+                    .getForEntity(mlUrl + "/compare", Map.class);
+            if (resp.getStatusCode().is2xxSuccessful()) return resp.getBody();
         } catch (Exception e) {
-            return false;
+            log.error("ML compare error: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    // ── Fallback when ML is unavailable ──────────────────────────────────
+    private Map<String, Object> fallbackResult() {
+        Map<String, Object> f = new HashMap<>();
+        f.put("is_fraud",          false);
+        f.put("confidence",        0.0);
+        f.put("fraud_probability", 0.0);
+        f.put("rf_probability",    0.0);
+        f.put("gb_probability",    0.0);
+        f.put("lr_probability",    0.0);
+        f.put("risk_score",        0.0);
+        f.put("model_used",        "unavailable");
+        return f;
+    }
+
+    private double toDouble(Object v) {
+        if (v == null) return 0.0;
+        try { return ((Number) v).doubleValue(); }
+        catch (Exception e) { return 0.0; }
+    }
+
+    // ── Inner DTO ─────────────────────────────────────────────────────────
+    public static class MlPrediction {
+        public final boolean isFraud;
+        public final double  confidence;
+        public final double  fraudProbability;
+        public final double  rfProbability;   // Random Forest
+        public final double  gbProbability;   // Gradient Boosting
+        public final double  lrProbability;   // Logistic Regression
+        public final String  modelUsed;
+
+        public MlPrediction(boolean isFraud, double confidence,
+                            double fraudProbability,
+                            double rfProbability,
+                            double gbProbability,
+                            double lrProbability,
+                            String modelUsed) {
+            this.isFraud          = isFraud;
+            this.confidence       = confidence;
+            this.fraudProbability = fraudProbability;
+            this.rfProbability    = rfProbability;
+            this.gbProbability    = gbProbability;
+            this.lrProbability    = lrProbability;
+            this.modelUsed        = modelUsed;
         }
     }
 }
